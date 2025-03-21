@@ -1,0 +1,49 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: dockerfiles/nginx.dockerfile
+    container_name: todo_nginx
+    ports:
+      - '38001:80'
+    volumes:
+      - ./app:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - todo_network
+    depends_on:
+      - php
+      - mysql
+  php:
+    build:
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+    container_name: todo_php
+    volumes:
+      - ./app:/var/www/html:delegated
+    networks:
+      - todo_network
+  mysql:
+    image: mysql:9.2.0
+    container_name: todo_mysql
+    volumes:
+      - todo_mysql_data:/var/lib/mysql:delegated
+    ports:
+      - "33096:3306"
+    env_file:
+      - ./env/mysql.env
+    networks:
+      - todo_network
+  composer:
+    build:
+      context: .
+      dockerfile: dockerfiles/composer.dockerfile
+    volumes:
+      - ./app:/var/www/html
+
+networks:
+  todo_network:
+    driver: bridge
+
+volumes:
+  todo_mysql_data:
